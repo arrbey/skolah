@@ -3,7 +3,6 @@
 Skolah.com adalah platform EdTech all-in-one untuk kursus online, bootcamp/webinar, toko buku, membership, sertifikat, checkout, dan pembayaran Midtrans.
 
 > Stack: Laravel 12 · MySQL 8 · Blade · Livewire 4 · Alpine.js · Tailwind CSS 4 · Vite
-
 ---
 
 ## Requirements
