@@ -20,6 +20,8 @@
     <form method="POST" action="{{ route('register.post') }}" class="space-y-5">
         @csrf
         @honeypot
+        <input type="hidden" name="register_form_token" value="{{ session('register_form_token') }}">
+        <input type="hidden" id="register_js_token" name="register_js_token" value="">
 
         {{-- Name --}}
         <div>
@@ -242,6 +244,13 @@
 
 @push('scripts')
 <script nonce="{{ $cspNonce ?? '' }}">
+function fillRegisterBrowserToken() {
+    const field = document.getElementById('register_js_token');
+    if (field) field.value = @json(session('register_js_token'));
+}
+
+fillRegisterBrowserToken();
+
 function togglePassword(fieldId, btn) {
     const field = document.getElementById(fieldId);
     const isHidden = field.type === 'password';

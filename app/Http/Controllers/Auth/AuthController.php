@@ -80,17 +80,23 @@ class AuthController extends Controller
 
     // ── Register ───────────────────────────────────────────────────────────────
 
-    public function showRegister(): View|RedirectResponse
+    public function showRegister(Request $request): View|RedirectResponse
     {
         if (Auth::check()) {
             return $this->redirectByRole(Auth::user());
         }
+
+        $request->session()->put('register_form_loaded_at', now()->timestamp);
+        $request->session()->put('register_form_token', Str::random(40));
+        $request->session()->put('register_js_token', Str::random(64));
 
         return view('auth.register');
     }
 
     public function register(RegisterRequest $request): RedirectResponse
     {
+        $request->session()->forget(['register_form_loaded_at', 'register_form_token', 'register_js_token']);
+
         $user = User::create([
             'name'     => $request->name,
             'email'    => $request->email,

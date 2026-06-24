@@ -166,15 +166,34 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // ── Register ───────────────────────────────────────────────────────
-        // Max 3 pendaftaran per menit per IP
+        // Multi-layer: cegah bot flood dari IP sama dan email target sama.
         RateLimiter::for('register', function (Request $request) {
-            return Limit::perMinute(3)
-                ->by($request->ip())
-                ->response(function () {
-                    return back()->withErrors([
-                        'email' => 'Terlalu banyak percobaan registrasi. Silakan coba lagi.',
-                    ])->withInput();
-                });
+            $email = Str::lower((string) $request->input('email'));
+            $emailKey = $email !== '' ? sha1($email) : 'no-email';
+            $ipKey = 'ip:' . $request->ip();
+
+            return [
+                Limit::perMinute(1)
+                    ->by($ipKey)
+                    ->response(fn () => back()->withErrors([
+                        'email' => 'Registrasi terlalu sering. Tunggu 1 menit sebelum mencoba lagi.',
+                    ])->withInput()),
+                Limit::perMinutes(60, 5)
+                    ->by($ipKey)
+                    ->response(fn () => back()->withErrors([
+                        'email' => 'Batas registrasi per jam tercapai. Coba lagi nanti.',
+                    ])->withInput()),
+                Limit::perMinutes(1440, 10)
+                    ->by($ipKey)
+                    ->response(fn () => back()->withErrors([
+                        'email' => 'Batas registrasi harian tercapai. Coba lagi besok.',
+                    ])->withInput()),
+                Limit::perMinutes(60, 3)
+                    ->by('email:' . $emailKey)
+                    ->response(fn () => back()->withErrors([
+                        'email' => 'Email ini terlalu sering digunakan untuk registrasi. Coba lagi nanti.',
+                    ])->withInput()),
+            ];
         });
 
         // ── Forgot / Reset Password ────────────────────────────────────────
