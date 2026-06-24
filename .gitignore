@@ -91,6 +91,11 @@ pnpm-debug.log*
 # AI agent packs / local assistant config
 /.github/ai-agent-skills/
 /.windsurf/
+**/SKILL.md
+**/skill.md
+**/AGENTS.md
+**/CLAUDE.md
+**/GEMINI.md
 .claude/
 .cursor/
 .gemini/
