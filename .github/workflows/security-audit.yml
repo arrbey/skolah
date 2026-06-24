@@ -1,0 +1,99 @@
+name: Security Audit
+
+# Jalankan scan otomatis untuk:
+# - Setiap push ke main/develop
+# - Setiap pull request ke main/develop
+# - Setiap hari pukul 02:00 UTC (09:00 WIB) — catch vulnerability baru yang dirilis setelah merge
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Manual trigger dari tab Actions
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  composer-audit:
+    name: Composer Security Audit (PHP dependencies)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, zip, gd, bcmath
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate composer.json
+        run: composer validate --strict --no-check-publish
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Install dependencies (no scripts to speed up)
+        run: composer install --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Run composer audit (fail on vulnerability)
+        run: composer audit --no-interaction --format=plain
+
+  npm-audit:
+    name: NPM Security Audit (JS dependencies)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      # Hanya fail untuk vulnerability HIGH/CRITICAL — MODERATE ignored
+      # (banyak sub-dep ecosystem Node yang moderate tapi tidak exploitable di prod)
+      - name: Run npm audit (high/critical only)
+        run: npm audit --audit-level=high
+
+  secret-scan:
+    name: Secret Scanner (credential leaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history untuk scan commit lama
+
+      - name: Run TruffleHog OSS
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+
+  # Bonus: static code analysis (opsional, di-disable kalau belum setup PHPStan)
+  # phpstan:
+  #   name: PHPStan (static analysis)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: shivammathur/setup-php@v2
+  #       with:
+  #         php-version: '8.2'
+  #     - run: composer install --no-interaction --prefer-dist
+  #     - run: ./vendor/bin/phpstan analyse --memory-limit=2G

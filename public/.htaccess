@@ -1,0 +1,208 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Skolah.com — public/.htaccess
+# Fase 10: .htaccess Komprehensif untuk Shared Hosting (cPanel)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Disable Server Signature & Directory Listing ──────────────────────────────
+ServerSignature Off
+Options -Indexes -MultiViews
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 1. REWRITE RULES
+# ══════════════════════════════════════════════════════════════════════════════
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # ── Handle Authorization Header ──────────────────────────────────────────
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # ── Handle X-XSRF-Token Header ──────────────────────────────────────────
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # ── Force HTTPS (Production) ─────────────────────────────────────────────
+    RewriteCond %{HTTPS} off
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # ── Block Sensitive Files via Rewrite ────────────────────────────────────
+    # .env, .git*, composer.*, package.*, artisan, phpunit.xml, dll
+    RewriteRule ^\.env - [F,L]
+    RewriteRule ^\.git - [F,L]
+    RewriteRule ^composer\.(json|lock)$ - [F,L]
+    RewriteRule ^package(-lock)?\.json$ - [F,L]
+    RewriteRule ^artisan$ - [F,L]
+    RewriteRule ^phpunit\.xml$ - [F,L]
+    RewriteRule ^webpack\.mix\.js$ - [F,L]
+    RewriteRule ^vite\.config\.js$ - [F,L]
+
+    # ── Block Hidden Directories & Files ─────────────────────────────────────
+    # Blok semua file/folder yang diawali titik (.git, .env, .svn, dll)
+    RewriteRule "(^|/)\." - [F,L]
+
+    # ── Block PHP Execution in Vendor Directory ────────────────────────────────
+    # Allow static assets (JS, CSS) but prevent PHP execution for security
+    RewriteRule ^vendor/.*\.php$ - [F,L]
+
+    # ── Prevent PHP Execution in storage/ ────────────────────────────────────
+    RewriteRule ^storage/.*\.(php|php5|phtml|pl|py|jsp|asp|sh|cgi)$ - [F,NC,L]
+
+    # ── Block Malicious Bots & Scanners ──────────────────────────────────────
+    RewriteCond %{HTTP_USER_AGENT} (havij|sqlmap|nikto|nmap|masscan|dirbuster|wpscan|acunetix|nessus|w3af|burpsuite|openvas|zaproxy) [NC]
+    RewriteRule .* - [F,L]
+
+    # ── Redirect Trailing Slashes If Not A Folder ────────────────────────────
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    # KECUALIKAN Midtrans dari redirect agar POST data tidak hilang saat 301
+    RewriteCond %{REQUEST_URI} !^/midtrans/webhook
+    RewriteRule ^ %1 [L,R=301]
+
+    # ── Laravel Front Controller ─────────────────────────────────────────────
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 2. SECURITY HEADERS
+# ══════════════════════════════════════════════════════════════════════════════
+<IfModule mod_headers.c>
+    # ── Standard Security Headers ────────────────────────────────────────────
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(self)"
+
+    # ── HSTS — HTTP Strict Transport Security ────────────────────────────────
+    # Browser paksa HTTPS selama 1 tahun.
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+    # ── Remove Information Leaking Headers ───────────────────────────────────
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+    Header always unset Server
+    Header unset Server
+
+    # ── Cache Control untuk Static Assets ────────────────────────────────────
+    <FilesMatch "\.(css|js|woff2?|ttf|eot|svg|ico|png|jpg|jpeg|webp|gif|avif)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # ── No-cache untuk HTML ──────────────────────────────────────────────────
+    <FilesMatch "\.(html|htm|php)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 3. FILE ACCESS PROTECTION
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Block Sensitive File Extensions ──────────────────────────────────────────
+<FilesMatch "\.(env|log|sql|bak|swp|tmp|dist|orig|rej|swo|DS_Store|gitignore|gitkeep|htpasswd|htaccess\.bak)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ── Block Common Config Files ────────────────────────────────────────────────
+<FilesMatch "^(\.env|\.editorconfig|\.gitattributes|\.gitignore|composer\.json|composer\.lock|package\.json|package-lock\.json|yarn\.lock|phpunit\.xml|artisan|Makefile|Dockerfile|docker-compose\.yml)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 4. PHP SETTINGS (Shared Hosting via .htaccess)
+# ══════════════════════════════════════════════════════════════════════════════
+<IfModule mod_php.c>
+    # ── Upload & Memory Limits ───────────────────────────────────────────────
+    php_value upload_max_filesize 10M
+    php_value post_max_size 12M
+    php_value max_execution_time 60
+    php_value memory_limit 256M
+    php_value max_input_vars 3000
+
+    # ── Session Security ─────────────────────────────────────────────────────
+    php_flag  session.cookie_httponly On
+    php_flag  session.cookie_secure On
+    php_value session.cookie_samesite Lax
+    php_flag  session.use_strict_mode On
+    php_flag  session.use_only_cookies On
+
+    # ── Error Handling (Production: jangan tampilkan error) ──────────────────
+    php_flag  display_errors Off
+    php_flag  display_startup_errors Off
+    php_flag  log_errors On
+    php_value error_reporting 32767
+
+    # ── Disable Dangerous Functions ──────────────────────────────────────────
+    php_value expose_php Off
+</IfModule>
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 5. CACHING — mod_expires (Static Assets Performance)
+# ══════════════════════════════════════════════════════════════════════════════
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault                          "access plus 1 month"
+
+    # ── Images ───────────────────────────────────────────────────────────────
+    ExpiresByType image/webp                "access plus 1 year"
+    ExpiresByType image/avif                "access plus 1 year"
+    ExpiresByType image/jpeg                "access plus 1 year"
+    ExpiresByType image/png                 "access plus 1 year"
+    ExpiresByType image/gif                 "access plus 1 year"
+    ExpiresByType image/svg+xml             "access plus 1 year"
+    ExpiresByType image/x-icon              "access plus 1 year"
+
+    # ── Fonts ────────────────────────────────────────────────────────────────
+    ExpiresByType font/woff                 "access plus 1 year"
+    ExpiresByType font/woff2                "access plus 1 year"
+    ExpiresByType application/font-woff     "access plus 1 year"
+    ExpiresByType application/font-woff2    "access plus 1 year"
+    ExpiresByType application/x-font-ttf    "access plus 1 year"
+
+    # ── CSS & JS ─────────────────────────────────────────────────────────────
+    ExpiresByType text/css                  "access plus 1 month"
+    ExpiresByType application/javascript    "access plus 1 month"
+    ExpiresByType text/javascript           "access plus 1 month"
+
+    # ── HTML & Data ──────────────────────────────────────────────────────────
+    ExpiresByType text/html                 "access plus 0 seconds"
+    ExpiresByType application/json          "access plus 0 seconds"
+    ExpiresByType application/xml           "access plus 0 seconds"
+</IfModule>
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 6. COMPRESSION — mod_deflate (Gzip/Brotli)
+# ══════════════════════════════════════════════════════════════════════════════
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+    AddOutputFilterByType DEFLATE text/javascript application/javascript application/json
+    AddOutputFilterByType DEFLATE application/x-font-ttf application/x-font-woff application/font-woff2
+    AddOutputFilterByType DEFLATE image/svg+xml application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml application/rss+xml
+
+    # Jangan compress gambar & binary (sudah compressed)
+    SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|webp|avif|zip|gz|bz2|rar)$ no-gzip
+</IfModule>
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 7. CUSTOM ERROR PAGES (Optional)
+# ══════════════════════════════════════════════════════════════════════════════
+# ErrorDocument 403 /errors/403.html
+# ErrorDocument 404 /errors/404.html
+# ErrorDocument 500 /errors/500.html

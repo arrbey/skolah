@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+# Private areas — jangan di-crawl
+Disallow: /admin
+Disallow: /admin/
+Disallow: /instructor
+Disallow: /instructor/
+Disallow: /dashboard
+Disallow: /dashboard/
+Disallow: /cart
+Disallow: /checkout
+Disallow: /learn/
+Disallow: /midtrans/
+
+# Sitemap
+Sitemap: https://skolah.com/sitemap.xml

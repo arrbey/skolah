@@ -1,0 +1,42 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Skolah.com — Root .htaccess (Defense-in-Depth)
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# File ini HANYA aktif jika document root salah dikonfigurasi ke root project
+# (misal /public_html/ bukan /public_html/public/).
+#
+# Pada konfigurasi yang benar, file ini tidak berpengaruh karena
+# Apache membaca .htaccess dari document root ke bawah.
+# ══════════════════════════════════════════════════════════════════════════════
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect semua request ke folder public/
+    # Aktifkan di production jika document root = /public_html/ (bukan /public_html/public/)
+    # RewriteCond %{REQUEST_URI} !^/public/
+    # RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# ── Block Direct Access ke File Sensitif ─────────────────────────────────────
+# CATATAN: Jangan block .php di sini — index.php di public/ harus accessible.
+# PHP di root project dilindungi oleh RewriteRule di bawah.
+<FilesMatch "\.(env|log|sql|bak|lock|json|xml|yml|yaml|md|sh)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ── Block All Access ke Direktori Sensitif ───────────────────────────────────
+# Kalau ada yang coba akses /app/, /config/, /database/, /storage/, /vendor/
+<IfModule mod_rewrite.c>
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage|tests|vendor|node_modules)/ - [F,L]
+</IfModule>
+
+# ── Disable Directory Listing ────────────────────────────────────────────────
+Options -Indexes
+ServerSignature Off

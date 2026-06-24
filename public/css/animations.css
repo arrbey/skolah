@@ -1,0 +1,82 @@
+/* ═══════════════════════════════════════════════════════════════
+   Scroll Reveal Animations
+   Clean fade-in + slide-up on scroll using IntersectionObserver
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Base hidden state */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Visible state */
+.reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Stagger delays for children */
+.reveal-stagger > .reveal:nth-child(1)  { transition-delay: 0s; }
+.reveal-stagger > .reveal:nth-child(2)  { transition-delay: 0.07s; }
+.reveal-stagger > .reveal:nth-child(3)  { transition-delay: 0.14s; }
+.reveal-stagger > .reveal:nth-child(4)  { transition-delay: 0.21s; }
+.reveal-stagger > .reveal:nth-child(5)  { transition-delay: 0.28s; }
+.reveal-stagger > .reveal:nth-child(6)  { transition-delay: 0.35s; }
+
+/* Direction variants */
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.reveal-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.reveal-left.is-visible,
+.reveal-right.is-visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Scale variant */
+.reveal-scale {
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.reveal-scale.is-visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Scroll progress bar */
+#scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg, #2563eb, #60a5fa);
+    z-index: 9999;
+    pointer-events: none;
+    transition: width 0.1s linear;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .reveal-left,
+    .reveal-right,
+    .reveal-scale {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}
