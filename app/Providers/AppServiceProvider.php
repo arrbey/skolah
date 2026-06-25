@@ -219,12 +219,16 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // ── Upload ─────────────────────────────────────────────────────────
-        // Max 20 upload per jam per user (cegah abuse storage)
+        // Max upload per jam per user (cegah abuse storage)
         RateLimiter::for('upload', function (Request $request) {
-            return Limit::perHour(20)
+            $limit = (int) \App\Models\Setting::get('max_uploads_per_hour', 20);
+            if ($limit <= 0) {
+                return Limit::none();
+            }
+            return Limit::perHour($limit)
                 ->by($request->user()?->id ?? $request->ip())
-                ->response(function () {
-                    return back()->with('error', 'Batas upload tercapai. Maksimal 20 file per jam.');
+                ->response(function () use ($limit) {
+                    return back()->with('error', "Batas upload tercapai. Maksimal {$limit} file per jam.");
                 });
         });
 

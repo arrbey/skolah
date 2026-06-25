@@ -334,18 +334,24 @@
                                 </label>
                             </div>
 
-                            <div class="grid sm:grid-cols-2 gap-4 pt-1">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Cache Lifetime (detik)</label>
-                                    <input type="number" name="settings[cache_lifetime]" value="{{ $settings['maintenance']['cache_lifetime'] ?? '3600' }}"
-                                           min="0" step="60" class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Maks Upload File (MB)</label>
-                                    <input type="number" name="settings[max_file_upload_mb]" value="{{ $settings['maintenance']['max_file_upload_mb'] ?? '10' }}"
-                                           min="1" max="100" class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500">
-                                </div>
-                            </div>
+                            <div class="grid sm:grid-cols-3 gap-4 pt-1">
+                                 <div>
+                                     <label class="block text-sm font-medium text-gray-700 mb-1.5">Cache Lifetime (detik)</label>
+                                     <input type="number" name="settings[cache_lifetime]" value="{{ $settings['maintenance']['cache_lifetime'] ?? '3600' }}"
+                                            min="0" step="60" class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500">
+                                 </div>
+                                 <div>
+                                     <label class="block text-sm font-medium text-gray-700 mb-1.5">Maks Upload File (MB)</label>
+                                     <input type="number" name="settings[max_file_upload_mb]" value="{{ $settings['maintenance']['max_file_upload_mb'] ?? '10' }}"
+                                            min="1" max="100" class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500">
+                                 </div>
+                                 <div>
+                                     <label class="block text-sm font-medium text-gray-700 mb-1.5">Batas Upload per Jam</label>
+                                     <input type="number" name="settings[max_uploads_per_hour]" value="{{ $settings['maintenance']['max_uploads_per_hour'] ?? '20' }}"
+                                            min="0" class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500">
+                                     <span class="text-xs text-gray-400 mt-1 block">* Isi 0 untuk tidak terbatas (unlimited)</span>
+                                 </div>
+                             </div>
                         </div>
                         <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end">
                             <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition-colors shadow-sm">

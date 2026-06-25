@@ -82,6 +82,7 @@ class SettingController extends Controller
             'registration_open'    => '1',
             'course_review_open'   => '1',
             'max_file_upload_mb'   => '10',
+            'max_uploads_per_hour' => '20',
         ],
         'landing' => [
             'hero_title_accent'    => 'Platform EdTech #1 Indonesia',
