@@ -15,7 +15,7 @@
 @endsection
 
 @section('content')
-<form method="POST" action="{{ route('instructor.courses.store') }}" enctype="multipart/form-data" class="space-y-6">
+<form method="POST" action="{{ route('instructor.courses.store') }}" enctype="multipart/form-data" class="space-y-6" id="instructor-course-create-form">
     @csrf
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -166,6 +166,7 @@
             {{-- Submit --}}
             <div class="flex gap-3">
                 <button type="submit"
+                        id="instructor-course-submit"
                         class="flex-1 px-5 py-3 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition-colors text-center">
                     Simpan Kursus
                 </button>
@@ -180,3 +181,16 @@
 @endsection
 
 @include('partials.tinymce')
+
+@push('scripts')
+<script>
+    document.getElementById('instructor-course-create-form')?.addEventListener('submit', function () {
+        const button = document.getElementById('instructor-course-submit');
+        if (!button) return;
+
+        button.disabled = true;
+        button.classList.add('opacity-70', 'cursor-not-allowed');
+        button.textContent = 'Menyimpan...';
+    });
+</script>
+@endpush

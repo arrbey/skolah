@@ -26,7 +26,6 @@ Thumbs.db
 # Dependencies / build
 /vendor
 /node_modules
-/public/build
 /public/hot
 /public/storage
 
