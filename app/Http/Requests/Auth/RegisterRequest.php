@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Validator;
+use Lunaweb\RecaptchaV3\Facades\RecaptchaV3;
 
 class RegisterRequest extends FormRequest
 {
@@ -46,6 +47,7 @@ class RegisterRequest extends FormRequest
             'terms'              => ['required', 'accepted'],
             'register_form_token' => ['required', 'string', 'size:40'],
             'register_js_token'   => ['required', 'string', 'size:64'],
+            'g-recaptcha-response' => ['required', 'string'],
         ];
     }
 
@@ -68,6 +70,21 @@ class RegisterRequest extends FormRequest
 
             if ($expectedJsToken === '' || ! hash_equals($expectedJsToken, $jsToken)) {
                 $validator->errors()->add('email', 'Validasi browser gagal. Muat ulang halaman dan coba lagi.');
+            }
+
+            // ── Verifikasi Google reCAPTCHA v3 ──────────────────────────────
+            $recaptchaToken = (string) $this->input('g-recaptcha-response', '');
+            if ($recaptchaToken !== '' && config('recaptchav3.secret') !== '') {
+                try {
+                    $score = RecaptchaV3::verify($recaptchaToken, 'register');
+                    if ($score === false || $score < 0.5) {
+                        $validator->errors()->add('email', 'Verifikasi bot gagal. Silakan coba lagi.');
+                    }
+                } catch (\Exception $e) {
+                    // Jika reCAPTCHA API gagal (misal: tidak ada internet), biarkan lolos
+                    // agar user asli tidak terblokir saat server Google down
+                    \Illuminate\Support\Facades\Log::warning('reCAPTCHA verify failed: ' . $e->getMessage());
+                }
             }
 
             $domain = Str::lower(Str::after((string) $this->input('email'), '@')); 
@@ -93,6 +110,7 @@ class RegisterRequest extends FormRequest
             'terms.accepted'              => 'Anda harus menyetujui syarat dan ketentuan.',
             'register_form_token.required' => 'Sesi registrasi tidak valid. Muat ulang halaman.',
             'register_js_token.required'   => 'Validasi browser gagal. Muat ulang halaman dan coba lagi.',
+            'g-recaptcha-response.required' => 'Verifikasi reCAPTCHA gagal. Muat ulang halaman dan coba lagi.',
         ];
     }
 

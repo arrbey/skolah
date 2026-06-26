@@ -22,6 +22,7 @@
         @honeypot
         <input type="hidden" name="register_form_token" value="{{ session('register_form_token') }}">
         <input type="hidden" id="register_js_token" name="register_js_token" value="">
+        <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response" value="">
 
         {{-- Name --}}
         <div>
@@ -242,10 +243,16 @@
     </div>
 @endsection
 
+@push('head')
+@if(config('recaptchav3.sitekey'))
+{!! RecaptchaV3::initJs() !!}
+@endif
+@endpush
+
 @push('scripts')
 <script nonce="{{ $cspNonce ?? '' }}">
 function fillRegisterBrowserToken() {
-    const field = document.getElementById('register_js_token');
+    var field = document.getElementById('register_js_token');
     if (field) field.value = @json(session('register_js_token'));
 }
 
@@ -263,5 +270,23 @@ document.querySelectorAll('[data-toggle-password]').forEach(function (button) {
         }
     });
 });
+
+@if(config('recaptchav3.sitekey'))
+// Saat form di-submit, ambil reCAPTCHA token terlebih dahulu
+var registerForm = document.querySelector('form[action*="register"]');
+if (registerForm) {
+    registerForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var form = this;
+        grecaptcha.ready(function () {
+            grecaptcha.execute('{{ config('recaptchav3.sitekey') }}', {action: 'register'}).then(function (token) {
+                var tokenField = document.getElementById('g-recaptcha-response');
+                if (tokenField) tokenField.value = token;
+                form.submit();
+            });
+        });
+    });
+}
+@endif
 </script>
 @endpush

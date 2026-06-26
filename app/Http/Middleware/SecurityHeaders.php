@@ -51,6 +51,7 @@ class SecurityHeaders
                    "https://cdn.tiny.cloud https://*.tinymce.com " .
                    "https://cdn.jsdelivr.net https://code.jquery.com " .
                    "https://www.youtube.com https://s.ytimg.com " .
+                   "https://www.google.com https://www.gstatic.com " .
                    "https://www.googletagmanager.com https://www.google-analytics.com; " .
                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdn.tiny.cloud https://*.tinymce.com; " .
                "img-src 'self' data: https: blob: " . $midtransDomains . ' https://*.tiny.cloud; ' .
@@ -59,10 +60,11 @@ class SecurityHeaders
                    $midtransDomains . ' ' .
                    "https://*.tiny.cloud " .
                    "https://cdn.jsdelivr.net " .
+                   "https://www.google.com " .
                    "wss://*.pusher.com wss://*.pusherapp.com " .
                    "https://*.pusher.com https://*.pusherapp.com " .
                    "https://www.google-analytics.com; " .
-               "frame-src 'self' " . $midtransDomains . ' https://*.tiny.cloud https://www.youtube.com https://*.youtube.com https://*.youtube-nocookie.com; ' .
+               "frame-src 'self' " . $midtransDomains . ' https://*.tiny.cloud https://www.youtube.com https://*.youtube.com https://*.youtube-nocookie.com https://www.google.com; ' .
                "object-src 'none'; " .
                "base-uri 'self'; " .
                "form-action 'self' " . $midtransDomains . ';';
