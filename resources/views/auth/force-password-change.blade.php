@@ -34,7 +34,7 @@
                            @error('password') border-red-300 ring-4 ring-red-100 bg-red-50 @enderror"
                 >
                 <button type="button"
-                        onclick="togglePassword('password', this)"
+                        data-toggle-password="password"
                         class="absolute inset-y-0 right-2 flex items-center px-3 text-slate-400 hover:text-slate-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -68,7 +68,7 @@
                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
                 >
                 <button type="button"
-                        onclick="togglePassword('password_confirmation', this)"
+                        data-toggle-password="password_confirmation"
                         class="absolute inset-y-0 right-2 flex items-center px-3 text-slate-400 hover:text-slate-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -92,10 +92,17 @@
 
 @push('scripts')
 <script nonce="{{ $cspNonce ?? '' }}">
-function togglePassword(fieldId, btn) {
-    const field = document.getElementById(fieldId);
-    const isHidden = field.type === 'password';
-    field.type = isHidden ? 'text' : 'password';
-}
+document.querySelectorAll('[data-toggle-password]').forEach(function (button) {
+    button.addEventListener('click', function () {
+        var targetId = this.getAttribute('data-toggle-password');
+        var field = document.getElementById(targetId);
+        if (field) {
+            var isHidden = field.type === 'password';
+            field.type = isHidden ? 'text' : 'password';
+            var svg = this.querySelector('svg');
+            if (svg) svg.style.opacity = isHidden ? '0.5' : '1';
+        }
+    });
+});
 </script>
 @endpush
