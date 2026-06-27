@@ -68,7 +68,7 @@ class HomeController extends Controller
         // We store cache in JSON format to completely prevent __PHP_Incomplete_Class issues on shared hosting
         $cachedJson = Cache::get('home_page_data_json_v3');
         if ($cachedJson) {
-            $rawData = json_decode($cachedJson, true);
+            $rawData = json_decode($cachedJson, true) ?: [];
             
             $data = [
                 'featuredCourses'   => $this->hydrateCollection(Course::class, $rawData['featuredCourses'] ?? []),
@@ -218,6 +218,9 @@ class HomeController extends Controller
     private function hydrateCollection(string $class, array $array)
     {
         return collect($array)->map(function ($item) use ($class) {
+            if (!is_array($item)) {
+                return null;
+            }
             // Find JSON cast fields and encode them back to string for newFromBuilder
             $relations = ['instructor', 'category', 'user', 'courses', 'children'];
             $attributes = [];
@@ -248,6 +251,6 @@ class HomeController extends Controller
                 }
             }
             return $model;
-        });
+        })->filter()->values();
     }
 }
