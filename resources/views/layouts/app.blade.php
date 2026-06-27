@@ -89,7 +89,7 @@
     {{-- Google Fonts: Inter (Loaded asynchronously to prevent render blocking) --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <link id="async-font" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" media="print">
     <noscript>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     </noscript>
@@ -111,10 +111,20 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
 
     {{-- Scroll Reveal Animations (Loaded asynchronously) --}}
-    <link rel="stylesheet" href="{{ asset('css/animations.css') }}" media="print" onload="this.media='all'">
+    <link id="async-animate" rel="stylesheet" href="{{ asset('css/animations.css') }}" media="print">
     <noscript>
         <link rel="stylesheet" href="{{ asset('css/animations.css') }}">
     </noscript>
+
+    {{-- Nonced Script to safely enable styles without violating CSP --}}
+    <script nonce="{{ $cspNonce ?? '' }}">
+        (function() {
+            var f = document.getElementById('async-font');
+            if (f) f.media = 'all';
+            var a = document.getElementById('async-animate');
+            if (a) a.media = 'all';
+        })();
+    </script>
 
     @stack('head')
 </head>
