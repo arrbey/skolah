@@ -64,93 +64,130 @@ class HomeController extends Controller
             'query-input' => 'required name=search_term_string',
         ]);
 
-        // ── Stats cached 1 hour (numerical data only, safe from serialization issues) ──
-        $stats = Cache::remember('home_stats_data', 3600, function () {
-            return [
+        // ── Cache loading ────────────────────────────────────────────────────
+        // We store cache in JSON format to completely prevent __PHP_Incomplete_Class issues on shared hosting
+        $cachedJson = Cache::get('home_page_data_json_v3');
+        if ($cachedJson) {
+            $rawData = json_decode($cachedJson, true);
+            
+            $data = [
+                'featuredCourses'   => $this->hydrateCollection(Course::class, $rawData['featuredCourses'] ?? []),
+                'featuredBundles'   => $this->hydrateCollection(Bundle::class, $rawData['featuredBundles'] ?? []),
+                'upcomingBootcamps' => $this->hydrateCollection(Bootcamp::class, $rawData['upcomingBootcamps'] ?? []),
+                'featuredBooks'     => $this->hydrateCollection(Book::class, $rawData['featuredBooks'] ?? []),
+                'categories'        => $this->hydrateCollection(Category::class, $rawData['categories'] ?? []),
+                'membershipPlans'   => $this->hydrateCollection(MembershipPlan::class, $rawData['membershipPlans'] ?? []),
+                'instructors'       => $this->hydrateCollection(User::class, $rawData['instructors'] ?? []),
+                'testimonials'      => $this->hydrateCollection(Testimonial::class, $rawData['testimonials'] ?? []),
+                'heroBanners'       => $this->hydrateCollection(Banner::class, $rawData['heroBanners'] ?? []),
+                'benefits'          => $this->hydrateCollection(\App\Models\Benefit::class, $rawData['benefits'] ?? []),
+                'landingPrograms'   => $this->hydrateCollection(\App\Models\LandingProgram::class, $rawData['landingPrograms'] ?? []),
+                'galleries'         => $this->hydrateCollection(\App\Models\Gallery::class, $rawData['galleries'] ?? []),
+                'campuses'          => $this->hydrateCollection(Campus::class, $rawData['campuses'] ?? []),
+                'stats'             => $rawData['stats'] ?? [],
+                'promoBanners'      => $this->hydrateCollection(Banner::class, $rawData['promoBanners'] ?? []),
+                'recentUsers'       => $this->hydrateCollection(User::class, $rawData['recentUsers'] ?? []),
+            ];
+        } else {
+            // Fetch fresh data
+            $stats = [
                 'students'    => User::role('user')->count(),
                 'courses'     => Course::where('status', 'published')->count(),
                 'instructors' => User::role('instructor')->where('is_active', true)->where('is_public', true)->count(),
                 'bootcamps'   => Bootcamp::where('status', '!=', 'completed')->count(),
             ];
-        });
 
-        $data = [
-            'featuredCourses' => Course::with(['instructor:id,name,avatar', 'category:id,name,slug'])
-                ->where('status', 'published')
-                ->where('is_featured', true)
-                ->orderByDesc('total_students')
-                ->limit(8)
-                ->get(),
+            $freshData = [
+                'featuredCourses' => Course::with(['instructor:id,name,avatar', 'category:id,name,slug'])
+                    ->where('status', 'published')
+                    ->where('is_featured', true)
+                    ->orderByDesc('total_students')
+                    ->limit(8)
+                    ->get(),
 
-            'featuredBundles' => Bundle::with(['instructor:id,name,avatar'])->withCount('courses')
-                ->where('status', 'published')
-                ->latest()
-                ->limit(3)
-                ->get(),
+                'featuredBundles' => Bundle::with(['instructor:id,name,avatar'])->withCount('courses')
+                    ->where('status', 'published')
+                    ->latest()
+                    ->limit(3)
+                    ->get(),
 
-            'upcomingBootcamps' => Bootcamp::with('instructor:id,name,avatar')
-                ->where('status', 'upcoming')
-                ->where('start_date', '>=', now())
-                ->orderBy('start_date')
-                ->limit(3)
-                ->get(),
+                'upcomingBootcamps' => Bootcamp::with('instructor:id,name,avatar')
+                    ->where('status', 'upcoming')
+                    ->where('start_date', '>=', now())
+                    ->orderBy('start_date')
+                    ->limit(3)
+                    ->get(),
 
-            'featuredBooks' => Book::where('status', 'published')
-                ->orderByDesc('created_at')
-                ->limit(4)
-                ->get(),
+                'featuredBooks' => Book::where('status', 'published')
+                    ->orderByDesc('created_at')
+                    ->limit(4)
+                    ->get(),
 
-            'categories' => Category::whereNull('parent_id')
-                ->withCount(['courses as own_courses_count' => fn ($q) => $q->where('status', 'published')])
-                ->with(['children' => fn($q) => $q->withCount(['courses as courses_count' => fn($q2) => $q2->where('status', 'published')])])
-                ->get()
-                ->each(function ($cat) {
-                    $cat->courses_count = $cat->own_courses_count + $cat->children->sum('courses_count');
-                })
-                ->sortByDesc('courses_count')
-                ->take(6)
-                ->values(),
+                'categories' => Category::whereNull('parent_id')
+                    ->withCount(['courses as own_courses_count' => fn ($q) => $q->where('status', 'published')])
+                    ->with(['children' => fn($q) => $q->withCount(['courses as courses_count' => fn($q2) => $q2->where('status', 'published')])])
+                    ->get()
+                    ->each(function ($cat) {
+                        $cat->courses_count = $cat->own_courses_count + $cat->children->sum('courses_count');
+                    })
+                    ->sortByDesc('courses_count')
+                    ->take(6)
+                    ->values(),
 
-            'membershipPlans' => MembershipPlan::where('is_active', true)
-                ->orderBy('price_monthly')
-                ->get(),
+                'membershipPlans' => MembershipPlan::where('is_active', true)
+                    ->orderBy('price_monthly')
+                    ->get(),
 
-            'instructors' => User::role('instructor')
-                ->where('is_active', true)
-                ->where('is_public', true)
-                ->withCount(['courses' => fn ($q) => $q->where('status', 'published')])
-                ->having('courses_count', '>=', 1)
-                ->orderByDesc('courses_count')
-                ->limit(4)
-                ->get(),
+                'instructors' => User::role('instructor')
+                    ->where('is_active', true)
+                    ->where('is_public', true)
+                    ->withCount(['courses' => fn ($q) => $q->where('status', 'published')])
+                    ->having('courses_count', '>=', 1)
+                    ->orderByDesc('courses_count')
+                    ->limit(4)
+                    ->get(),
 
-            'testimonials' => Testimonial::with('user:id,name,avatar')
-                ->featured()
-                ->highRated(4)
-                ->latest()
-                ->limit(6)
-                ->get(),
+                'testimonials' => Testimonial::with('user:id,name,avatar')
+                    ->featured()
+                    ->highRated(4)
+                    ->latest()
+                    ->limit(6)
+                    ->get(),
 
-            'heroBanners' => Banner::where('position', 'hero')
-                ->where('is_active', true)
-                ->orderBy('order')
-                ->limit(3)
-                ->get(),
+                'heroBanners' => Banner::where('position', 'hero')
+                    ->where('is_active', true)
+                    ->orderBy('order')
+                    ->limit(3)
+                    ->get(),
 
-            'benefits'        => \App\Models\Benefit::active()->ordered()->get(),
-            'landingPrograms' => \App\Models\LandingProgram::active()->ordered()->get(),
-            'galleries'       => \App\Models\Gallery::active()->ordered()->get(),
-            'campuses'        => Campus::active()->ordered()->get(),
+                'benefits'        => \App\Models\Benefit::active()->ordered()->get(),
+                'landingPrograms' => \App\Models\LandingProgram::active()->ordered()->get(),
+                'galleries'       => \App\Models\Gallery::active()->ordered()->get(),
+                'campuses'        => Campus::active()->ordered()->get(),
 
-            'stats' => $stats,
+                'stats' => $stats,
 
-            'promoBanners' => Banner::where('position', 'promo')
-                ->where('is_active', true)
-                ->ordered()
-                ->get(),
+                'promoBanners' => Banner::where('position', 'promo')
+                    ->where('is_active', true)
+                    ->ordered()
+                    ->get(),
 
-            'recentUsers' => User::role('user')->latest()->limit(5)->get(),
-        ];
+                'recentUsers' => User::role('user')->latest()->limit(5)->get(),
+            ];
+
+            // Convert to array and save as JSON
+            $arrayData = [];
+            foreach ($freshData as $key => $value) {
+                if ($value instanceof \Illuminate\Support\Collection) {
+                    $arrayData[$key] = $value->toArray();
+                } else {
+                    $arrayData[$key] = $value;
+                }
+            }
+
+            Cache::put('home_page_data_json_v3', json_encode($arrayData), 600);
+            $data = $freshData;
+        }
 
         extract($data);
 
@@ -172,5 +209,34 @@ class HomeController extends Controller
             'promoBanners',
             'recentUsers'
         ));
+    }
+
+    /**
+     * Safely hydrates raw array data back into Eloquent Collections and Models.
+     * Prevents any __PHP_Incomplete_Class issues from serialization.
+     */
+    private function hydrateCollection(string $class, array $array)
+    {
+        return collect($array)->map(function ($item) use ($class) {
+            $model = (new $class)->newFromBuilder($item);
+            
+            // Hydrate nested relations
+            foreach ($item as $key => $value) {
+                if (is_array($value)) {
+                    if ($key === 'instructor') {
+                        $model->setRelation('instructor', (new User)->newFromBuilder($value));
+                    } elseif ($key === 'category') {
+                        $model->setRelation('category', (new Category)->newFromBuilder($value));
+                    } elseif ($key === 'user') {
+                        $model->setRelation('user', (new User)->newFromBuilder($value));
+                    } elseif ($key === 'courses') {
+                        $model->setRelation('courses', $this->hydrateCollection(Course::class, $value));
+                    } elseif ($key === 'children') {
+                        $model->setRelation('children', $this->hydrateCollection(Category::class, $value));
+                    }
+                }
+            }
+            return $model;
+        });
     }
 }
