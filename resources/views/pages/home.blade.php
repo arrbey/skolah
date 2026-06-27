@@ -41,7 +41,7 @@
                         <div class="flex items-center gap-3">
                             <div
                                 class="w-10 h-10 rounded-full {{ $stat['iconbg'] }} flex items-center justify-center overflow-hidden">
-                                <img src="{{ $stat['icon'] }}" alt="{{ $stat['label'] }}" class="w-8 h-8 object-contain">
+                                <img src="{{ $stat['icon'] }}" alt="{{ $stat['label'] }}" class="w-8 h-8 object-contain" decoding="async" fetchpriority="high">
                             </div>
                             <div>
                                 <div class="text-xl font-black text-slate-800 tracking-tight">
@@ -108,7 +108,8 @@
                                     style="z-index: {{ 50 - (int) $index }}"
                                     src="{{ $userAvatar }}"
                                     title="{{ $userName }}"
-                                    alt="{{ $userName }}" />
+                                    alt="{{ $userName }}"
+                                    decoding="async" />
                             @endforeach
                             <div
                                 class="w-10 h-10 rounded-full border-2 border-white bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs shadow-sm relative z-0">
@@ -322,9 +323,9 @@
                                             {{-- Default Illustration based on title --}}
                                             <div class="h-64 flex items-center justify-center">
                                                 @if(Str::contains(strtolower($program->title), 'learning'))
-                                                    <img src="https://img.icons8.com/3d-fluency/100/video-conference.png" alt="Learning" class="w-48 h-48 object-contain">
+                                                    <img src="https://img.icons8.com/3d-fluency/100/video-conference.png" alt="Learning" class="w-48 h-48 object-contain" loading="lazy" decoding="async">
                                                 @else
-                                                    <img src="https://img.icons8.com/3d-fluency/100/books.png" alt="Education" class="w-48 h-48 object-contain">
+                                                    <img src="https://img.icons8.com/3d-fluency/100/books.png" alt="Education" class="w-48 h-48 object-contain" loading="lazy" decoding="async">
                                                 @endif
                                             </div>
                                         @endif
@@ -350,7 +351,7 @@
                                 <ul class="space-y-4">
                                     @foreach($program->features as $feature)
                                         <li class="flex items-start gap-4 group/li">
-                                            <img src="https://img.icons8.com/3d-fluency/100/ok.png" class="w-6 h-6 object-contain" alt="check">
+                                            <img src="https://img.icons8.com/3d-fluency/100/ok.png" class="w-6 h-6 object-contain" alt="check" loading="lazy" decoding="async">
                                             <span class="text-gray-700 font-semibold group-hover/li:text-blue-600 transition-colors">{{ $feature }}</span>
                                         </li>
                                     @endforeach
@@ -567,7 +568,7 @@
                     @endphp
                     <div class="reveal group relative rounded-2xl border border-slate-100 bg-white p-8 shadow-sm hover:shadow-xl hover:border-blue-200 hover:-translate-y-1 transition-all duration-300">
                         <div class="w-16 h-16 rounded-xl {{ $bgColor }} flex items-center justify-center mb-6 border border-slate-50 group-hover:scale-110 transition-transform overflow-hidden">
-                            <img src="{{ $item['icon'] }}" alt="{{ $item['title'] }}" class="w-12 h-12 object-contain">
+                            <img src="{{ $item['icon'] }}" alt="{{ $item['title'] }}" class="w-12 h-12 object-contain" loading="lazy" decoding="async">
                         </div>
                         <h3 class="font-bold text-slate-900 text-lg mb-3">{{ $item['title'] }}</h3>
                         <p class="text-sm text-slate-500 leading-relaxed">{{ $item['desc'] }}</p>
@@ -588,7 +589,7 @@
                 @endphp
                 @foreach($statsBanner as $s)
                     <div class="px-6 text-center first:pl-0 last:pr-0 flex flex-col items-center">
-                        <img src="{{ $s['icon'] }}" alt="{{ $s['label'] }}" class="w-12 h-12 mb-3 object-contain">
+                        <img src="{{ $s['icon'] }}" alt="{{ $s['label'] }}" class="w-12 h-12 mb-3 object-contain" loading="lazy" decoding="async">
                         <p
                             class="text-4xl font-black text-blue-600">
                             {{ $s['num'] }}</p>
@@ -966,7 +967,7 @@
                         @endif
                         
                         <div class="mb-8">
-                            <img src="{{ $icon }}" alt="{{ $plan->name }}" class="w-20 h-20 mb-6 object-contain">
+                            <img src="{{ $icon }}" alt="{{ $plan->name }}" class="w-20 h-20 mb-6 object-contain" loading="lazy" decoding="async">
                             <h3 class="text-2xl font-black text-slate-900">{{ $plan->name }}</h3>
                             <p class="text-slate-500 text-sm mt-2 font-medium">{{ $plan->description }}</p>
                         </div>
@@ -986,7 +987,7 @@
                         <ul class="space-y-4 mb-10 flex-grow">
                             @foreach($plan->features as $feature)
                                 <li class="flex items-center gap-3 text-slate-700 font-bold">
-                                    <img src="https://img.icons8.com/3d-fluency/100/ok.png" class="w-5 h-5 object-contain" alt="check">
+                                    <img src="https://img.icons8.com/3d-fluency/100/ok.png" class="w-5 h-5 object-contain" alt="check" loading="lazy" decoding="async">
                                     {{ $feature }}
                                 </li>
                             @endforeach
@@ -1020,7 +1021,7 @@
         <div class="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center reveal">
 
             <div class="flex justify-center mb-6">
-                <img src="https://img.icons8.com/3d-fluency/100/opened-folder.png" alt="Featured" class="w-20 h-20 object-contain">
+                <img src="https://img.icons8.com/3d-fluency/100/opened-folder.png" alt="Featured" class="w-20 h-20 object-contain" loading="lazy" decoding="async">
             </div>
             <span
                 class="inline-flex items-center gap-1.5 text-blue-100 text-xs font-semibold bg-white/10 px-4 py-1.5 rounded-full mb-5 border border-white/20 uppercase tracking-widest">

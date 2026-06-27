@@ -86,10 +86,13 @@
         <title>{{ \Artesaos\SEOTools\Facades\SEOMeta::getTitle() ?: \App\Models\Setting::get('site_name', config('app.name')) }}</title>
     @endif
 
-    {{-- Google Fonts: Inter --}}
+    {{-- Google Fonts: Inter (Loaded asynchronously to prevent render blocking) --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    </noscript>
 
     {{-- Tailwind CSS (compiled via Vite) — already included by @vite above --}}
 
@@ -107,8 +110,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
 
-    {{-- Scroll Reveal Animations --}}
-    <link rel="stylesheet" href="{{ asset('css/animations.css') }}">
+    {{-- Scroll Reveal Animations (Loaded asynchronously) --}}
+    <link rel="stylesheet" href="{{ asset('css/animations.css') }}" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="{{ asset('css/animations.css') }}">
+    </noscript>
 
     @stack('head')
 </head>
