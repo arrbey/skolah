@@ -218,7 +218,18 @@ class HomeController extends Controller
     private function hydrateCollection(string $class, array $array)
     {
         return collect($array)->map(function ($item) use ($class) {
-            $model = (new $class)->newFromBuilder($item);
+            // Find JSON cast fields and encode them back to string for newFromBuilder
+            $relations = ['instructor', 'category', 'user', 'courses', 'children'];
+            $attributes = [];
+            foreach ($item as $key => $value) {
+                if (is_array($value) && !in_array($key, $relations, true)) {
+                    $attributes[$key] = json_encode($value);
+                } else {
+                    $attributes[$key] = $value;
+                }
+            }
+
+            $model = (new $class)->newFromBuilder($attributes);
             
             // Hydrate nested relations
             foreach ($item as $key => $value) {
