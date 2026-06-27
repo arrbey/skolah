@@ -27,57 +27,71 @@
         $pixelId = \App\Models\Setting::get('facebook_pixel_id');
     @endphp
 
-    @if($gtmId)
-    <!-- Google Tag Manager (Deferred to load event to prevent blocking) -->
+    @if($gtmId || $ga4Id || $pixelId)
+    <!-- Dynamic Lazy-Load Tracking Scripts on User Interaction -->
     <script nonce="{{ $cspNonce ?? '' }}">
-      window.addEventListener('load', function() {
-        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','{{ $gtmId }}');
-      });
+      (function() {
+        var initialized = false;
+        
+        function initTracking() {
+          if (initialized) return;
+          initialized = true;
+          
+          // Clean up event listeners
+          window.removeEventListener('scroll', initTracking);
+          window.removeEventListener('mousemove', initTracking);
+          window.removeEventListener('touchstart', initTracking);
+          
+          // 1. Google Tag Manager
+          @if($gtmId)
+          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+          })(window,document,'script','dataLayer','{{ $gtmId }}');
+          @endif
+
+          // 2. Google Analytics 4
+          @if($ga4Id)
+          var gaScript = document.createElement('script');
+          gaScript.src = "https://www.googletagmanager.com/gtag/js?id={{ $ga4Id }}";
+          gaScript.async = true;
+          document.head.appendChild(gaScript);
+
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '{{ $ga4Id }}');
+          @endif
+
+          // 3. Meta Pixel (Facebook)
+          @if($pixelId)
+          !function(f,b,e,v,n,t,s)
+          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+          n.queue=[];t=b.createElement(e);t.async=!0;
+          t.src=v;s=b.getElementsByTagName(e)[0];
+          s.parentNode.insertBefore(t,s)}(window, document,'script',
+          'https://connect.facebook.net/en_US/fbevents.js');
+          fbq('init', '{{ $pixelId }}');
+          fbq('track', 'PageView');
+          @endif
+        }
+
+        // Trigger on interaction or fallback after 4 seconds
+        window.addEventListener('scroll', initTracking, { passive: true });
+        window.addEventListener('mousemove', initTracking, { passive: true });
+        window.addEventListener('touchstart', initTracking, { passive: true });
+        setTimeout(initTracking, 4000);
+      })();
     </script>
-    <!-- End Google Tag Manager -->
-    @endif
-
-    @if($ga4Id)
-    <!-- Google tag (gtag.js) (Deferred to load event) -->
-    <script nonce="{{ $cspNonce ?? '' }}">
-      window.addEventListener('load', function() {
-        var script = document.createElement('script');
-        script.src = "https://www.googletagmanager.com/gtag/js?id={{ $ga4Id }}";
-        script.async = true;
-        document.head.appendChild(script);
-
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', '{{ $ga4Id }}');
-      });
-    </script>
-    @endif
-
+    
     @if($pixelId)
-    <!-- Meta Pixel Code (Deferred to load event) -->
-    <script nonce="{{ $cspNonce ?? '' }}">
-    window.addEventListener('load', function() {
-        !function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '{{ $pixelId }}');
-        fbq('track', 'PageView');
-    });
-    </script>
     <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id={{ $pixelId }}&ev=PageView&noscript=1"
     /></noscript>
-    <!-- End Meta Pixel Code -->
+    @endif
     @endif
 
     {{-- SEOTools meta tags --}}
