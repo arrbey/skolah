@@ -477,11 +477,12 @@
                         slidesPerView: 1.2,
                         spaceBetween: 16,
                         loop: true,
-                        speed: 600, 
+                        speed: 8000, 
                         autoplay: {
-                            delay: 3500,
+                            delay: 0,
                             disableOnInteraction: false,
                         },
+                        freeMode: true,
                         grabCursor: true,
                         navigation: {
                             nextEl: ".gallery-next",
